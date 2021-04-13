@@ -1,0 +1,27 @@
+kind: "BuildConfig"
+apiVersion: "v1"
+metadata:
+  name: "pipeline"
+spec:
+  strategy:
+    jenkinsPipelineStrategy:
+      jenkinsfile: |-
+        node('maven') {
+          stage('Clone') {
+            sh "git config --global http.sslVerify false"
+            sh "git clone https://github.com/karimbzu/hello-world.git"
+          }
+          stage('Build') {
+            sh "mvn -v"
+            sh "mvn clean package -f hello-world/pom.xml"
+            def jarFile = sh(returnStdout: true, script: 'find hello-world/target -maxdepth 1 -regextype posix-extended -regex ".+\\.(jar|war)\$" | head -n 1').trim()
+            sh "cp ${jarFile} app.jar"
+          }
+          stage('Deploy') {
+            sh "oc new-build --name hello-world --binary -n my-project --image-stream=openjdk18-openshift  || true"
+            sh "oc start-build hello-world --from-file=app.jar -n my-project --follow --wait"
+            sh "oc new-app hello-world || true"
+            sh "oc expose svc/hello-world || true"
+           }
+        }
+    type: JenkinsPipeline

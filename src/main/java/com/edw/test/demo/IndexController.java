@@ -19,7 +19,7 @@ public class IndexController {
     @GetMapping("/")
     public HashMap get() {
         return new HashMap(){{
-            put("Message", "Hello World");
+            put("Message", "Hello World from Dr Karim");
         }};
     }
 
